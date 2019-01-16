@@ -9,34 +9,6 @@ class Item {
 }
 
 class UI {
-      static displayItems() {
-            const list = [
-                  {
-                        group: 'first group',
-                        name: 'first name',
-                        type: 'first type',
-                        id: 312,
-                        amount: 456
-                  },
-                  {
-                        group: 'first group',
-                        name: 'third name',
-                        type: 'third type',
-                        id: 43534,
-                        amount: 44556
-                  },
-                  {
-                        group: 'second group',
-                        name: 'second name',
-                        type: 'second type',
-                        id: 875,
-                        amount: 985
-                  }
-            ];
-
-            list.forEach(item => UI.listItem(item));
-      }
-
       static listItem(item){
             if(document.getElementById(item.group) === null) {
                   const li = document.createElement('li');
@@ -65,13 +37,36 @@ class UI {
       }
 }
 
+class Database {
+      static getItems() {
+            firebase.firestore().settings({ timestampsInSnapshots: true });
+            firebase.firestore().collection('items').onSnapshot(snapshot => {
+                  document.getElementById('item-list').innerHTML = '';
+                  snapshot.docs.forEach(doc => {
+                        UI.listItem(doc.data());
+                  });
+            });
+      }
+
+      static addItem(item) {
+            firebase.firestore().collection('items').add(item);
+
+            Array.from(document.getElementById('item-list').children).forEach((value, key) => {
+                  if(value.id === item.group) {
+                        setTimeout(() => M.Collapsible.getInstance(document.getElementById('item-list')).open(key), 100)
+                  }
+            });
+      }
+}
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
       M.Collapsible.init(document.querySelectorAll('.collapsible'));
       M.Modal.init(document.querySelectorAll('.modal'));
+      firebase.initializeApp({apiKey: "AIzaSyB5Mei15xp6ykQUV2p59K1j8lrDk5jsFEI", authDomain: "precise-elektrik.firebaseapp.com", databaseURL: "https://precise-elektrik.firebaseio.com", projectId: "precise-elektrik"});
 
-      UI.displayItems();
+      Database.getItems();
 });
 
 const itemForm = document.getElementById('item-form');
@@ -85,6 +80,6 @@ itemForm.addEventListener('submit', (e) => {
       const amount = itemForm['item-amount-input'].value;
       const item = new Item(group, name, type, id, amount);
 
-      UI.listItem(item);
+      Database.addItem({ ...item });
       itemForm.reset();
 });
