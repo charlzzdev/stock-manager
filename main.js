@@ -9,7 +9,7 @@ class Item {
 }
 
 class UI {
-      static listItem(item){
+      static listItem(item, itemId){
             if(document.getElementById(item.group) === null) {
                   const li = document.createElement('li');
                   li.id = item.group;
@@ -21,7 +21,7 @@ class UI {
                                           <tr><th>Megnevezés</th><th>Típus</th><th>Cikkszám</th><th>Raktár</th></tr>
                                     </thead>
                                     <tbody id="${item.group}-tbody">
-                                          <tr><td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td><span class="amount">${item.amount}</span> db <a href="#amount" class="modal-trigger right">szerkeszt</a></td></tr>
+                                          <tr><td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="modal-trigger edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer;">delete</i></td></tr>
                                     </tbody>
                               </table>
                         </div>
@@ -30,7 +30,7 @@ class UI {
                   document.getElementById('item-list').appendChild(li);
             } else {
                   const tr = document.createElement('tr');
-                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td><span class="amount">${item.amount}</span> db <a href="#amount" class="modal-trigger right">szerkeszt</a></td>`;
+                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="modal-trigger edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer;">delete</i></td>`;
 
                   document.getElementById(`${item.group}-tbody`).appendChild(tr);
             }
@@ -43,19 +43,21 @@ class Database {
             firebase.firestore().collection('items').onSnapshot(snapshot => {
                   document.getElementById('item-list').innerHTML = '';
                   snapshot.docs.forEach(doc => {
-                        UI.listItem(doc.data());
+                        UI.listItem(doc.data(), doc.id);
                   });
             });
       }
 
       static addItem(item) {
             firebase.firestore().collection('items').add(item);
+      }
 
-            Array.from(document.getElementById('item-list').children).forEach((value, key) => {
-                  if(value.id === item.group) {
-                        setTimeout(() => M.Collapsible.getInstance(document.getElementById('item-list')).open(key), 100)
-                  }
-            });
+      static deleteItem(itemId){
+            firebase.firestore().collection('items').doc(itemId).delete();
+      }
+
+      static updateItem(itemId, amount){
+            firebase.firestore().collection('items').doc(itemId).update({ amount });
       }
 }
 
@@ -82,4 +84,22 @@ itemForm.addEventListener('submit', (e) => {
 
       Database.addItem({ ...item });
       itemForm.reset();
+});
+
+document.addEventListener('click', (e) => {
+      if(e.target.classList.contains('delete')){
+            Database.deleteItem(e.target.parentElement.id);
+      }
+
+      if(e.target.classList.contains('edit')){
+            amountForm.id = e.target.parentElement.id;
+      }
+});
+
+const amountForm = document.querySelector('.edit-amount-form');
+amountForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      Database.updateItem(e.target.id, e.target['edit-amount-input'].value);
+      amountForm.reset();
 });
