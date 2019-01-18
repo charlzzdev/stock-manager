@@ -10,18 +10,22 @@ class Item {
 
 class UI {
       static listItem(item, itemId){
+            M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="modal-trigger edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer;">delete</i></td>`;
+            
             if(document.getElementById(item.group) === null) {
                   const li = document.createElement('li');
                   li.id = item.group;
                   li.innerHTML = `
                         <div class="collapsible-header">${item.group}</div>
                         <div class="collapsible-body">
-                              <table class="highlight">
+                              <table class="striped responsive-table">
                                     <thead>
                                           <tr><th>Megnevezés</th><th>Típus</th><th>Cikkszám</th><th>Raktár</th></tr>
                                     </thead>
                                     <tbody id="${item.group}-tbody">
-                                          <tr><td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="modal-trigger edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer;">delete</i></td></tr>
+                                          <tr>${tr.innerHTML}</tr>
                                     </tbody>
                               </table>
                         </div>
@@ -29,9 +33,6 @@ class UI {
 
                   document.getElementById('item-list').appendChild(li);
             } else {
-                  const tr = document.createElement('tr');
-                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="modal-trigger edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer;">delete</i></td>`;
-
                   document.getElementById(`${item.group}-tbody`).appendChild(tr);
             }
       }
@@ -49,15 +50,27 @@ class Database {
       }
 
       static addItem(item) {
-            firebase.firestore().collection('items').add(item);
+            firebase.firestore().collection('items').add(item).then(() => {
+                  M.toast({html: 'Sikeresen hozzáadva', classes: 'green'});
+            }).catch(() => {
+                  M.toast({html: 'Sikertelen hozzáadás', classes: 'red'});
+            });
       }
 
       static deleteItem(itemId){
-            firebase.firestore().collection('items').doc(itemId).delete();
+            firebase.firestore().collection('items').doc(itemId).delete().then(() => {
+                  M.toast({html: 'Sikeresen törölve', classes: 'green'});
+            }).catch(() => {
+                  M.toast({html: 'Sikertelen törlés', classes: 'red'});
+            });
       }
 
       static updateItem(itemId, amount){
-            firebase.firestore().collection('items').doc(itemId).update({ amount });
+            firebase.firestore().collection('items').doc(itemId).update({ amount }).then(() => {
+                  M.toast({html: 'Sikeresen szerkesztve', classes: 'green'});
+            }).catch(() => {
+                  M.toast({html: 'Sikertelen szerkesztés', classes: 'red'});
+            });
       }
 }
 
@@ -87,12 +100,18 @@ itemForm.addEventListener('submit', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-      if(e.target.classList.contains('delete')){
+      if(e.target.classList.contains('delete') && confirm(`Biztos törlöd ${e.target.parentElement.parentElement.children[0].innerHTML}-t?`)){
             Database.deleteItem(e.target.parentElement.id);
       }
 
       if(e.target.classList.contains('edit')){
             amountForm.id = e.target.parentElement.id;
+            amountForm['edit-amount-input'].value = e.target.innerHTML.split(' ')[0];
+      }
+
+      if(e.target.classList.contains('collapsible-header')){
+            Array.from(e.target.parentElement.parentElement.children).forEach((item, key) => item.className === 'active' ? UI.activeItem = key : null);
+            itemForm['item-group-input'].value = e.target.innerHTML;
       }
 });
 
