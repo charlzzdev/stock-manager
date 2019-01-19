@@ -49,15 +49,22 @@
             </div>
       </form>
 
-      <div class="modal" id="changes">
+      <div class="modal modal-fixed-footer" id="changes">
             <div class="modal-content">
                   <h4>Legutóbbi változtatások</h4>
-                  <table>
+                  <table class="striped responsive-table">
                         <thead>
                               <tr><th>Megnevezés</th><th>Típus</th><th>Cikkszám</th><th>Raktár</th><th>Dátum</th></tr>
                         </thead>
                         <tbody id="changes-tbody"></tbody>
                   </table>
+            </div>
+            <div class="modal-footer">
+                  <button class="btn-flat waves-effect" onclick="Database.getChanges(5)">5</button>
+                  <button class="btn-flat waves-effect" onclick="Database.getChanges(10)">10</button>
+                  <button class="btn-flat waves-effect" onclick="Database.getChanges(25)">25</button>
+                  <button class="btn-flat waves-effect" onclick="Database.getChanges(50)">50</button>
+                  <button class="btn-flat waves-effect" onclick="Database.getChanges(100)">100</button>
             </div>
       </div>
 
