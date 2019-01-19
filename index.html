@@ -60,15 +60,26 @@
                   </table>
             </div>
             <div class="modal-footer">
-                  <button class="btn-flat waves-effect" onclick="Database.getChanges(5)">5</button>
-                  <button class="btn-flat waves-effect" onclick="Database.getChanges(10)">10</button>
-                  <button class="btn-flat waves-effect" onclick="Database.getChanges(25)">25</button>
-                  <button class="btn-flat waves-effect" onclick="Database.getChanges(50)">50</button>
-                  <button class="btn-flat waves-effect" onclick="Database.getChanges(100)">100</button>
+                  <button class="btn-flat waves-effect changes-length">5</button>
+                  <button class="btn-flat waves-effect changes-length">10</button>
+                  <button class="btn-flat waves-effect changes-length">25</button>
+                  <button class="btn-flat waves-effect changes-length">50</button>
+                  <button class="btn-flat waves-effect changes-length">100</button>
             </div>
       </div>
 
-      
+      <div class="modal" id="sign-in">
+            <div class="modal-content">
+                  <h4>Bejelentkezés</h4>
+                  <form id="sign-in-form">
+                        <input type="text" id="email" placeholder="E-mail">
+                        <input type="password" id="password" placeholder="Jelszó">
+                        <button class="btn blue modal-close">Bejelentkezés</button>
+                  </form>
+            </div>
+      </div>
+
+
       
       <nav>
             <div class="nav-wrapper blue">
@@ -77,7 +88,9 @@
       </nav>
 
       <div class="container" style="margin-top: 65px;">
-            <a class="modal-trigger btn blue" href="#item-form">Hozzáad</a>
+            <a class="modal-trigger btn blue" id="sign-in-trigger" href="#sign-in">Bejelentkezés</a>
+            <button class="btn blue" id="sign-out-trigger" style="display: none;">Kijelentkezés</button>
+            <a class="modal-trigger btn blue" id="item-form-trigger" style="display: none;" href="#item-form">Hozzáad</a>
             <a href="#changes" class="modal-trigger" id="changes-trigger">Legutóbbi változtatások</a>
             <ul class="collapsible" id="item-list"></ul>
       </div>
