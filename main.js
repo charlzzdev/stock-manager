@@ -19,7 +19,7 @@
                         const li = document.createElement('li');
                         li.id = item.group;
                         li.innerHTML = `
-                              <div class="collapsible-header">${item.group}</div>
+                              <div class="collapsible-header" style="position: relative;">${item.group}<i class="material-icons print" style="position:absolute; right: 0;">print</i></div>
                               <div class="collapsible-body">
                                     <table class="striped responsive-table">
                                           <thead>
@@ -44,6 +44,17 @@
                   Array.from(document.getElementsByClassName('delete')).forEach(element => element.style.display = deleteTrigger);
                   document.getElementById('item-form-trigger').style.display = itemFormTrigger;
                   Array.from(document.getElementsByClassName('edit')).forEach(element => element.className = amountTrigger);
+            }
+
+            static print(group){
+                  UI.hideElements('', '', 'none', '', '');
+                  const table = document.getElementById(`${group}-tbody`).parentElement;
+                  const body = document.getElementsByTagName('body')[0];
+                  table.children[0].children[0].innerHTML += '<th style="width: 100px;">Tényleges raktár</th>';
+                  Array.from(table.children[1].children).forEach(element => element.innerHTML += '<td>__________</td>');
+                  body.innerHTML = `<h5 style="margin-left: 20px;">${group}</h5> ${table.outerHTML}`;
+                  print();
+                  document.location.reload();
             }
       }
 
@@ -191,7 +202,7 @@
 
             if(e.target.classList.contains('collapsible-header')){
                   Array.from(e.target.parentElement.parentElement.children).forEach((item, key) => item.className === 'active' ? UI.activeItem = key : null);
-                  itemForm['item-group-input'].value = e.target.innerHTML;
+                  itemForm['item-group-input'].value = e.target.innerHTML.split('<')[0];
             }
 
             if(e.target.classList.contains('changes-length')){
@@ -199,6 +210,8 @@
             }
 
             if(e.target.id === 'sign-out-trigger') Auth.signOut();
+
+            if(e.target.classList.contains('print')) UI.print(e.target.previousSibling.data);
       });
 
       const amountForm = document.querySelector('.edit-amount-form');
