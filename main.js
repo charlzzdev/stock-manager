@@ -13,7 +13,7 @@
             static listItem(item, itemId){
                   M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
                   const tr = document.createElement('tr');
-                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="${Auth.uid !== '' ? 'modal-trigger' : ''} edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid !== '' ? '' : 'display: none;'}">delete</i></td>`;
+                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i></td>`;
                   
                   if(document.getElementById(item.group) === null) {
                         const li = document.createElement('li');
@@ -61,7 +61,7 @@
       class Database {
             static getItems() {
                   firebase.firestore().settings({ timestampsInSnapshots: true });
-                  firebase.firestore().collection('items').onSnapshot(snapshot => {
+                  Database.unsubscribeGetItems = firebase.firestore().collection('items').onSnapshot(snapshot => {
                         document.getElementById('item-list').innerHTML = '';
                         snapshot.docs.forEach(doc => {
                               UI.listItem(doc.data(), doc.id);
@@ -70,42 +70,37 @@
             }
 
             static addItem(item) {
-                  if(Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03'){
-                        firebase.firestore().collection('items').add(item).then(() => {
-                              M.toast({html: 'Sikeresen hozzáadva', classes: 'green'});
-                              Database.addToChanges(item, 'add');
-                        }).catch(() => {
-                              M.toast({html: 'Sikertelen hozzáadás', classes: 'red'});
-                        });
-                  }
+                  firebase.firestore().collection('items').add(item).then(() => {
+                        M.toast({html: 'Sikeresen hozzáadva', classes: 'green'});
+                        Database.addToChanges(item, 'add');
+                  }).catch(() => {
+                        M.toast({html: 'Sikertelen hozzáadás', classes: 'red'});
+                  });
             }
 
             static deleteItem(itemId){
                   const changedItem = document.getElementById(itemId).parentElement.children;
-                  if(Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03'){
-                        firebase.firestore().collection('items').doc(itemId).delete().then(() => {
-                              M.toast({html: 'Sikeresen törölve', classes: 'green'});
-                              Database.addToChanges(changedItem, 'delete');
-                        }).catch(() => {
-                              M.toast({html: 'Sikertelen törlés', classes: 'red'});
-                        });
-                  }
+                  firebase.firestore().collection('items').doc(itemId).delete().then(() => {
+                        M.toast({html: 'Sikeresen törölve', classes: 'green'});
+                        Database.addToChanges(changedItem, 'delete');
+                  }).catch(() => {
+                        M.toast({html: 'Sikertelen törlés', classes: 'red'});
+                  });
             }
 
             static updateItem(itemId, amount){
                   const changedItem = document.getElementById(itemId).parentElement.children;
-                  if(Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03'){
-                        firebase.firestore().collection('items').doc(itemId).update({ amount }).then(() => {
-                              M.toast({html: 'Sikeresen szerkesztve', classes: 'green'});
-                              Database.addToChanges(changedItem, 'update', amount);
-                        }).catch(() => {
-                              M.toast({html: 'Sikertelen szerkesztés', classes: 'red'});
-                        });
-                  }
+                  firebase.firestore().collection('items').doc(itemId).update({ amount }).then(() => {
+                        M.toast({html: 'Sikeresen szerkesztve', classes: 'green'});
+                        Database.addToChanges(changedItem, 'update', amount);
+                  }).catch(() => {
+                        M.toast({html: 'Sikertelen szerkesztés', classes: 'red'});
+                  });
             }
 
             static getChanges(limit){
-                  firebase.firestore().collection('changes').orderBy('date', 'desc').limit(limit).onSnapshot(snapshot => {
+                  Database.unsubscribeGetChanges !== undefined ? Database.unsubscribeGetChanges() : null;
+                  Database.unsubscribeGetChanges = firebase.firestore().collection('changes').orderBy('date', 'desc').limit(limit).onSnapshot(snapshot => {
                         let changes = document.getElementById('changes-tbody');
                         changes.innerHTML = '';
                         snapshot.docs.forEach(doc => {
@@ -153,11 +148,17 @@
             static getState(){
                   firebase.auth().onAuthStateChanged(user => {
                         if(user) {
+                              Database.getItems();
+                              Database.getChanges(5);
                               Auth.uid = user.uid;
                               UI.hideElements('none', '', '', '', 'modal-trigger edit');
                         } else {
+                              Database.unsubscribeGetItems !== undefined ? Database.unsubscribeGetItems() : null;
+                              Database.unsubscribeGetChanges !== undefined ? Database.unsubscribeGetChanges() : null;
                               Auth.uid = '';
                               UI.hideElements('', 'none', 'none', 'none', 'edit');
+                              document.getElementById('item-list').innerHTML = '';
+                              document.getElementById('changes-tbody').innerHTML = '';
                         }
                   });
             }
@@ -170,8 +171,6 @@
             M.Modal.init(document.querySelectorAll('.modal'));
             firebase.initializeApp({apiKey: "AIzaSyB5Mei15xp6ykQUV2p59K1j8lrDk5jsFEI", authDomain: "precise-elektrik.firebaseapp.com", databaseURL: "https://precise-elektrik.firebaseio.com", projectId: "precise-elektrik"});
 
-            Database.getItems();
-            Database.getChanges(5);
             Auth.getState();
       });
 
@@ -206,7 +205,7 @@
             }
 
             if(e.target.classList.contains('changes-length')){
-                  Database.getChanges(parseInt(e.target.innerHTML.split('<')[0]));
+                  Auth.uid !== '' ? Database.getChanges(parseInt(e.target.innerHTML.split('<')[0])) : null;
             }
 
             if(e.target.id === 'sign-out-trigger') Auth.signOut();
