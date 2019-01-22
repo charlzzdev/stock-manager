@@ -13,7 +13,13 @@
             static listItem(item, itemId){
                   M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
                   const tr = document.createElement('tr');
-                  tr.innerHTML = `<td>${item.name}</td><td>${item.type}</td><td>${item.id}</td><td id="${itemId}"><a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} db</a><i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i></td>`;
+                  tr.innerHTML = `<td>${item.name}</td>
+                        <td>${item.type}</td>
+                        <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
+                        <td id="${itemId}">
+                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} db</a>
+                              <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i>
+                  </td>`;
                   
                   if(document.getElementById(item.group) === null) {
                         const li = document.createElement('li');
@@ -79,10 +85,11 @@
             }
 
             static deleteItem(itemId){
-                  const changedItem = document.getElementById(itemId).parentElement.children;
+                  const changedItem = document.getElementById(itemId).parentElement;
                   firebase.firestore().collection('items').doc(itemId).delete().then(() => {
                         M.toast({html: 'Sikeresen törölve', classes: 'green'});
-                        Database.addToChanges(changedItem, 'delete');
+                        Database.addToChanges(changedItem.children, 'delete');
+                        Storage.deleteImage(changedItem.children[2].children[0].innerHTML);
                   }).catch(() => {
                         M.toast({html: 'Sikertelen törlés', classes: 'red'});
                   });
@@ -113,20 +120,20 @@
             }
 
             static addToChanges(item, action, amount){
-                  const date = new Date().toISOString().split('T');
+                  const date = new Intl.DateTimeFormat('hu-HU', {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(new Date());
                   firebase.firestore().collection('changes').add(
                         action === 'add' ? {
                               name: item.name,
                               type: item.type,
                               id: item.id,
                               amount: `<span class="green-text">Hozzáadva (${item.amount})</span>`,
-                              date: `${date[0]} ${date[1].split('.')[0]}`
+                              date
                         } : {
                               name: item[0].innerHTML,
                               type: item[1].innerHTML,
-                              id: item[2].innerHTML,
+                              id: item[2].children[0].innerHTML,
                               amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount} db</span>` : '<span class="red-text">Törölve</span>',
-                              date: `${date[0]} ${date[1].split('.')[0]}`
+                              date
                         }
                   );
             }
@@ -164,12 +171,34 @@
             }
       }
 
+      class Storage {
+            static uploadImage(file, itemId){
+                  if(file.type === 'image/jpeg' || file.type === 'image/jpg' || file.type === 'image/png'){
+                        firebase.storage().ref(`/idImages/${itemId}`).put(file)
+                              .then(() => M.toast({html: 'Sikeres kép feltöltés', classes: 'green'}))
+                              .catch(() => M.toast({html: 'Sikertelen kép feltöltés', classes: 'red'}));
+                  } else M.toast({html: `Rossz fájl formátum: ${file.type.split('/')[1].toUpperCase()}. (Elfogadott: JPEG, JPG, PNG)`, classes: 'red'});
+            }
+
+            static getImage(name){
+                  firebase.storage().ref('/idImages/').child(name).getDownloadURL().then(url => {
+                        document.getElementById('image').src = url;
+                  });
+            }
+
+            static deleteImage(name){
+                  firebase.storage().ref('/idImages/').child(name).delete()
+                        .then(() => M.toast({html: 'Sikeres kép törlés', classes: 'green'}))
+                        .catch(() => M.toast({html: 'Sikertelen kép törlés', classes: 'red'}));
+            }
+      }
+
 
 
       document.addEventListener('DOMContentLoaded', () => {
             M.Collapsible.init(document.querySelectorAll('.collapsible'));
             M.Modal.init(document.querySelectorAll('.modal'));
-            firebase.initializeApp({apiKey: "AIzaSyB5Mei15xp6ykQUV2p59K1j8lrDk5jsFEI", authDomain: "precise-elektrik.firebaseapp.com", databaseURL: "https://precise-elektrik.firebaseio.com", projectId: "precise-elektrik"});
+            firebase.initializeApp({apiKey: "AIzaSyB5Mei15xp6ykQUV2p59K1j8lrDk5jsFEI", authDomain: "precise-elektrik.firebaseapp.com", databaseURL: "https://precise-elektrik.firebaseio.com", projectId: "precise-elektrik", storageBucket: "precise-elektrik.appspot.com"});
 
             Auth.getState();
       });
@@ -186,6 +215,10 @@
             const item = new Item(group, name, type, id, amount);
 
             Database.addItem({ ...item });
+
+            const file = itemForm['item-file-input'].files[0];
+            Storage.uploadImage(file, id);
+
             itemForm.reset();
       });
 
@@ -211,6 +244,10 @@
             if(e.target.id === 'sign-out-trigger') Auth.signOut();
 
             if(e.target.classList.contains('print')) UI.print(e.target.previousSibling.data);
+
+            if(e.target.classList.contains('image-trigger')){
+                  Storage.getImage(e.target.innerHTML);
+            }
       });
 
       const amountForm = document.querySelector('.edit-amount-form');

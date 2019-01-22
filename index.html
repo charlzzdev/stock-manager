@@ -42,6 +42,7 @@
                         <input id="item-amount-input" type="number">
                         <label for="item-amount-input">Raktár</label>
                   </div>
+                  <input type="file" id="item-file-input">
             </div>
             <div class="modal-footer">
                   <button class="btn-flat col right waves-effect waves-green modal-close">Hozzáad</button>
@@ -79,6 +80,8 @@
             </div>
       </div>
 
+      <img class="modal modal-close" id="image" style="max-height: 80%; bottom: 10%; width: initial;">
+
 
       
       <nav>
@@ -99,6 +102,7 @@
       <script src="https://www.gstatic.com/firebasejs/5.7.3/firebase-app.js"></script>
       <script src="https://www.gstatic.com/firebasejs/5.7.3/firebase-auth.js"></script>
       <script src="https://www.gstatic.com/firebasejs/5.7.3/firebase-firestore.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/5.7.3/firebase-storage.js"></script>
       <script src="./main.js"></script>
 </body>
 </html>
