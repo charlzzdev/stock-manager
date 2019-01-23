@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,8 +13,14 @@
             <div class="modal-content">
                   <h4>Szerkeszt</h4>
                   <form class="row edit-amount-form">
-                        <input type="number" id="edit-amount-input">
-                        <button class="btn blue col l12 modal-close">OK</button>
+                        <div style="display: flex;">
+                              <input type="number" id="edit-amount-input">
+                              <select id="edit-unit">
+                                    <option>db</option>
+                                    <option>fm</option>
+                              </select>
+                        </div>
+                        <button class="btn blue col l12 s12 modal-close">OK</button>
                   </form>
             </div>
       </div>
@@ -30,17 +36,34 @@
                         <input id="item-name-input" type="text">
                         <label for="item-name-input">Megnevezés</label>
                   </div>
-                  <div class="input-field col l6 s12">
-                        <input id="item-type-input" type="text">
-                        <label for="item-type-input">Típus</label>
+                  <div class="col l6 s12" style="display: flex;">
+                        <div class="input-field">
+                              <input id="item-type-input" type="text">
+                              <label for="item-type-input">Típus</label>
+                        </div>
+                        <div class="input-field col">
+                              <select id="type-unit">
+                                    <option>mm²</option>
+                                    <option>kg</option>
+                                    <option>liter</option>
+                              </select>
+                        </div>
                   </div>
-                  <div class="input-field col l6 s6">
+                  <div class="input-field col l6 s12">
                         <input id="item-id-input" type="text">
                         <label for="item-id-input">Cikkszám</label>
                   </div>
-                  <div class="input-field col l6 s6">
-                        <input id="item-amount-input" type="number">
-                        <label for="item-amount-input">Raktár</label>
+                  <div class="col l6 s12" style="display: flex;">
+                        <div class="input-field">
+                              <input id="item-amount-input" type="number">
+                              <label for="item-amount-input">Raktár</label>
+                        </div>
+                        <div class="input-field col">
+                              <select id="amount-unit">
+                                    <option>db</option>
+                                    <option>fm</option>
+                              </select>
+                        </div>
                   </div>
                   <input type="file" id="item-file-input">
             </div>
@@ -82,8 +105,8 @@
 
       <img class="modal modal-close" id="image" style="max-height: 80%; bottom: 10%; width: initial;">
 
-
       
+
       <nav>
             <div class="nav-wrapper blue">
                   <a href="#" class="brand-logo center">Raktárkezelő</a>

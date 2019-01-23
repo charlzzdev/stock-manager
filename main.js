@@ -17,7 +17,7 @@
                         <td>${item.type}</td>
                         <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
                         <td id="${itemId}">
-                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} db</a>
+                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount}</a>
                               <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i>
                   </td>`;
                   
@@ -132,7 +132,7 @@
                               name: item[0].innerHTML,
                               type: item[1].innerHTML,
                               id: item[2].children[0].innerHTML,
-                              amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount} db</span>` : '<span class="red-text">Törölve</span>',
+                              amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount}</span>` : '<span class="red-text">Törölve</span>',
                               date
                         }
                   );
@@ -198,6 +198,7 @@
       document.addEventListener('DOMContentLoaded', () => {
             M.Collapsible.init(document.querySelectorAll('.collapsible'));
             M.Modal.init(document.querySelectorAll('.modal'));
+            M.FormSelect.init(document.querySelectorAll('select'));
             firebase.initializeApp({apiKey: "AIzaSyB5Mei15xp6ykQUV2p59K1j8lrDk5jsFEI", authDomain: "precise-elektrik.firebaseapp.com", databaseURL: "https://precise-elektrik.firebaseio.com", projectId: "precise-elektrik", storageBucket: "precise-elektrik.appspot.com"});
 
             Auth.getState();
@@ -209,17 +210,15 @@
 
             const group = itemForm['item-group-input'].value.trim();
             const name = itemForm['item-name-input'].value;
-            const type = itemForm['item-type-input'].value;
+            const type = `${itemForm['item-type-input'].value} ${itemForm['type-unit'].value}`;
             const id = itemForm['item-id-input'].value;
-            const amount = itemForm['item-amount-input'].value;
+            const amount = `${itemForm['item-amount-input'].value} ${itemForm['amount-unit'].value}`;
+            const file = itemForm['item-file-input'].files[0];
             const item = new Item(group, name, type, id, amount);
 
             Database.addItem({ ...item });
-
-            const file = itemForm['item-file-input'].files[0];
-            Storage.uploadImage(file, id);
-
             itemForm.reset();
+            Storage.uploadImage(file, id);
       });
 
       document.addEventListener('click', (e) => {
@@ -254,7 +253,7 @@
       amountForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            Database.updateItem(e.target.dataset.id, e.target['edit-amount-input'].value);
+            Database.updateItem(e.target.dataset.id, `${e.target['edit-amount-input'].value} ${e.target['edit-unit'].value}`);
             amountForm.reset();
       });
 
