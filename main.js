@@ -1,11 +1,13 @@
 (function() {
       class Item {
-            constructor(group, name, type, id, amount) {
+            constructor(group, name, type, id, amount, typeUnit, amountUnit) {
                   this.group = group;
                   this.name = name;
                   this.type = type;
                   this.id = id;
                   this.amount = amount;
+                  this.typeUnit = typeUnit;
+                  this.amountUnit = amountUnit;
             }
       }
 
@@ -14,10 +16,10 @@
                   M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
                   const tr = document.createElement('tr');
                   tr.innerHTML = `<td>${item.name}</td>
-                        <td>${item.type}</td>
+                        <td>${item.type} ${item.typeUnit}</td>
                         <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
                         <td id="${itemId}">
-                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount}</a>
+                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} ${item.amountUnit}</a>
                               <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i>
                   </td>`;
                   
@@ -113,7 +115,11 @@
                         snapshot.docs.forEach(doc => {
                               let data = doc.data();
                               changes.innerHTML += `<tr>
-                                    <td>${data.name}</td><td>${data.type}</td><td>${data.id}</td><td>${data.amount}</td><td>${data.date}</td>
+                                    <td>${data.name}</td>
+                                    <td>${data.type} ${data.typeUnit}</td>
+                                    <td>${data.id}</td>
+                                    <td>${data.amount}</td>
+                                    <td>${data.date}</td>
                               </tr>`;
                         });
                   });
@@ -125,14 +131,16 @@
                         action === 'add' ? {
                               name: item.name,
                               type: item.type,
+                              typeUnit: item.typeUnit,
                               id: item.id,
-                              amount: `<span class="green-text">Hozzáadva (${item.amount})</span>`,
+                              amount: `<span class="green-text">Hozzáadva (${item.amount} ${item.amountUnit})</span>`,
                               date
                         } : {
                               name: item[0].innerHTML,
-                              type: item[1].innerHTML,
+                              type: item[1].innerHTML.split(' ')[0],
+                              typeUnit: item[1].innerHTML.split(' ')[1],
                               id: item[2].children[0].innerHTML,
-                              amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount}</span>` : '<span class="red-text">Törölve</span>',
+                              amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount} ${item[3].children[0].innerHTML.split(' ')[1]}</span>` : '<span class="red-text">Törölve</span>',
                               date
                         }
                   );
@@ -181,9 +189,9 @@
             }
 
             static getImage(name){
-                  firebase.storage().ref('/idImages/').child(name).getDownloadURL().then(url => {
-                        document.getElementById('image').src = url;
-                  });
+                  firebase.storage().ref('/idImages/').child(name).getDownloadURL()
+                        .then(url => document.getElementById('image').src = url)
+                        .catch(() => M.toast({html: `${name} képe nem lett megtalálva`, classes: 'red'}));
             }
 
             static deleteImage(name){
@@ -210,15 +218,17 @@
 
             const group = itemForm['item-group-input'].value.trim();
             const name = itemForm['item-name-input'].value;
-            const type = `${itemForm['item-type-input'].value} ${itemForm['type-unit'].value}`;
+            const type = itemForm['item-type-input'].value;
+            const typeUnit = itemForm['type-unit'].value;
             const id = itemForm['item-id-input'].value;
-            const amount = `${itemForm['item-amount-input'].value} ${itemForm['amount-unit'].value}`;
+            const amount = itemForm['item-amount-input'].value;
+            const amountUnit = itemForm['amount-unit'].value;
             const file = itemForm['item-file-input'].files[0];
-            const item = new Item(group, name, type, id, amount);
+            const item = new Item(group, name, type, id, amount, typeUnit, amountUnit);
 
             Database.addItem({ ...item });
             itemForm.reset();
-            Storage.uploadImage(file, id);
+            if(file !== undefined) Storage.uploadImage(file, id);
       });
 
       document.addEventListener('click', (e) => {
@@ -253,7 +263,7 @@
       amountForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            Database.updateItem(e.target.dataset.id, `${e.target['edit-amount-input'].value} ${e.target['edit-unit'].value}`);
+            Database.updateItem(e.target.dataset.id, e.target['edit-amount-input'].value);
             amountForm.reset();
       });
 
