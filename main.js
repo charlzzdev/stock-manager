@@ -1,6 +1,6 @@
 (function() {
       class Item {
-            constructor(group, name, type, id, amount, typeUnit, amountUnit, amountLimit) {
+            constructor(group, name, type, id, amount, typeUnit, amountUnit, amountLimit, manufacturer) {
                   this.group = group;
                   this.name = name;
                   this.type = type;
@@ -9,6 +9,7 @@
                   this.typeUnit = typeUnit;
                   this.amountUnit = amountUnit;
                   this.amountLimit = amountLimit;
+                  this.manufacturer = manufacturer;
             }
       }
 
@@ -50,6 +51,24 @@
                   }
             }
 
+            static listManufacturers(manufacturers){
+                  const wrapper = document.getElementById('manufacturer-select-wrapper');
+                  wrapper.innerHTML = '';
+                  const select = document.createElement('select');
+                  select.id = 'manufacturer-select';
+
+                  manufacturers.forEach(manufacturer => {
+                        const option = document.createElement('option');
+                        option.innerHTML = manufacturer;
+                        select.appendChild(option);
+                  });
+                  wrapper.appendChild(select);
+                  M.FormSelect.init(select);
+                  select.addEventListener('change', (e) => {
+                        Database.getItemsWhere(e.target.value);
+                  });
+            }
+
             static hideElements(signInTrigger, signOutTrigger, deleteTrigger, itemFormTrigger, amountTrigger){
                   document.getElementById('sign-in-trigger').style.display = signInTrigger;
                   document.getElementById('sign-out-trigger').style.display = signOutTrigger;
@@ -72,13 +91,39 @@
 
       class Database {
             static getItems() {
+                  Database.unsubscribeGetItemsWhere !== undefined ? Database.unsubscribeGetItemsWhere() : null;
                   firebase.firestore().settings({ timestampsInSnapshots: true });
                   Database.unsubscribeGetItems = firebase.firestore().collection('items').onSnapshot(snapshot => {
-                        document.getElementById('item-list').innerHTML = '';
-                        snapshot.docs.forEach(doc => {
-                              UI.listItem(doc.data(), doc.id);
-                        });
+                        Database.loopAndDisplay(snapshot);
+                        Database.getManufacturers(snapshot);
                   });
+            }
+
+            static getItemsWhere(manufacturer){
+                  Database.unsubscribeGetItems();
+                  if(manufacturer !== "Összes"){
+                        Database.unsubscribeGetItemsWhere = firebase.firestore().collection('items').where("manufacturer", "==", manufacturer).onSnapshot(snapshot => {
+                              Database.loopAndDisplay(snapshot);
+                        });
+                  } else Database.getItems();
+            }
+
+            static loopAndDisplay(snapshot){
+                  document.getElementById('item-list').innerHTML = '';
+
+                  snapshot.docs.forEach(doc => {
+                        UI.listItem(doc.data(), doc.id);
+                  });
+            }
+
+            static getManufacturers(snapshot){
+                  const manufacturers = ["Összes"];
+
+                  snapshot.docs.forEach(doc => {
+                        const currentManufacturer = doc.data().manufacturer;
+                        if (manufacturers.includes(currentManufacturer) === false) manufacturers.push(currentManufacturer);
+                  });
+                  UI.listManufacturers(manufacturers);
             }
 
             static addItem(item) {
@@ -228,8 +273,9 @@
             const amount = itemForm['item-amount-input'].valueAsNumber;
             const amountUnit = itemForm['amount-unit'].value;
             const amountLimit = itemForm['amount-limit'].valueAsNumber;
+            const manufacturer = itemForm['manufacturer-input'].value.trim();
             const file = itemForm['item-file-input'].files[0];
-            const item = new Item(group, name, type, id, amount, typeUnit, amountUnit, amountLimit);
+            const item = new Item(group, name, type, id, amount, typeUnit, amountUnit, amountLimit, manufacturer);
 
             Database.addItem({ ...item });
             itemForm.reset();
