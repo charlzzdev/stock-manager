@@ -1,6 +1,6 @@
 (function() {
       class Item {
-            constructor(group, name, type, id, amount, typeUnit, amountUnit) {
+            constructor(group, name, type, id, amount, typeUnit, amountUnit, amountLimit) {
                   this.group = group;
                   this.name = name;
                   this.type = type;
@@ -8,6 +8,7 @@
                   this.amount = amount;
                   this.typeUnit = typeUnit;
                   this.amountUnit = amountUnit;
+                  this.amountLimit = amountLimit;
             }
       }
 
@@ -19,7 +20,10 @@
                         <td>${item.type} ${item.typeUnit}</td>
                         <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
                         <td id="${itemId}">
-                              <a href="#amount" class="${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''} edit">${item.amount} ${item.amountUnit}</a>
+                              <a href="#amount" class="
+                                    ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''}
+                                    ${item.amount < item.amountLimit ? 'red-text' : ''}
+                              edit">${item.amount} ${item.amountUnit}</a>
                               <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i>
                   </td>`;
                   
@@ -221,10 +225,11 @@
             const type = itemForm['item-type-input'].value;
             const typeUnit = itemForm['type-unit'].value;
             const id = itemForm['item-id-input'].value;
-            const amount = itemForm['item-amount-input'].value;
+            const amount = itemForm['item-amount-input'].valueAsNumber;
             const amountUnit = itemForm['amount-unit'].value;
+            const amountLimit = itemForm['amount-limit'].valueAsNumber;
             const file = itemForm['item-file-input'].files[0];
-            const item = new Item(group, name, type, id, amount, typeUnit, amountUnit);
+            const item = new Item(group, name, type, id, amount, typeUnit, amountUnit, amountLimit);
 
             Database.addItem({ ...item });
             itemForm.reset();
@@ -239,6 +244,7 @@
             if(e.target.classList.contains('edit')){
                   amountForm.dataset.id = e.target.parentElement.id;
                   amountForm['edit-amount-input'].value = e.target.innerHTML.split(' ')[0];
+                  amountForm['edit-amount-input'].focus();
             }
 
             if(e.target.classList.contains('collapsible-header')){
@@ -254,16 +260,18 @@
 
             if(e.target.classList.contains('print')) UI.print(e.target.previousSibling.data);
 
-            if(e.target.classList.contains('image-trigger')){
-                  Storage.getImage(e.target.innerHTML);
-            }
+            if(e.target.classList.contains('image-trigger')) Storage.getImage(e.target.innerHTML);
+
+            if(e.target.id === 'item-form-trigger') document.getElementById('item-group-input').focus();
+
+            if(e.target.id === 'sign-in-trigger') document.getElementById('email').focus();
       });
 
       const amountForm = document.querySelector('.edit-amount-form');
       amountForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            Database.updateItem(e.target.dataset.id, e.target['edit-amount-input'].value);
+            Database.updateItem(e.target.dataset.id, e.target['edit-amount-input'].valueAsNumber);
             amountForm.reset();
       });
 
