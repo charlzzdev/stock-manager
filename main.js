@@ -17,15 +17,15 @@
             static listItem(item, itemId){
                   M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
                   const tr = document.createElement('tr');
-                  tr.innerHTML = `<td>${item.name}</td>
+                  tr.innerHTML = `<td title=${item.manufacturer}>${item.name}</td>
                         <td>${item.type} ${item.typeUnit}</td>
                         <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
                         <td id="${itemId}">
                               <a href="#amount" class="
-                                    ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? 'modal-trigger' : ''}
+                                    ${Auth.uid === 'vw2XmPhi0SY4EAowNUAimyFznDk2' ? 'modal-trigger' : ''}
                                     ${item.amount < item.amountLimit ? 'red-text' : ''}
                               edit">${item.amount} ${item.amountUnit}</a>
-                              <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'VJYk7J4B4CdE6NtoqBGrEVJggJ03' ? '' : 'display: none;'}">delete</i>
+                              <i class="material-icons right red-text delete" style="cursor: pointer; ${Auth.uid === 'vw2XmPhi0SY4EAowNUAimyFznDk2' ? '' : 'display: none;'}">delete</i>
                   </td>`;
                   
                   if(document.getElementById(item.group) === null) {
@@ -87,6 +87,10 @@
                   print();
                   document.location.reload();
             }
+
+            static clearItemList(){
+                  document.getElementById('item-list').innerHTML = '';
+            }
       }
 
       class Database {
@@ -108,8 +112,25 @@
                   } else Database.getItems();
             }
 
+            static getItemsUnderLimit(){
+                  firebase.firestore().collection('items').get().then(snapshot => {
+                        UI.clearItemList();
+                        let hasItems = false;
+
+                        snapshot.docs.forEach(doc => {
+                              const item = doc.data();
+
+                              if(item.amount < item.amountLimit) {
+                                    UI.listItem(item, doc.id);
+                                    hasItems = true;
+                              };
+                        });
+                        if(!hasItems) M.toast({html: 'Semmi sincs limit alatt.', classes: 'red'});
+                  });
+            }
+
             static loopAndDisplay(snapshot){
-                  document.getElementById('item-list').innerHTML = '';
+                  UI.clearItemList();
 
                   snapshot.docs.forEach(doc => {
                         UI.listItem(doc.data(), doc.id);
@@ -159,10 +180,10 @@
             static getChanges(limit){
                   Database.unsubscribeGetChanges !== undefined ? Database.unsubscribeGetChanges() : null;
                   Database.unsubscribeGetChanges = firebase.firestore().collection('changes').orderBy('date', 'desc').limit(limit).onSnapshot(snapshot => {
-                        let changes = document.getElementById('changes-tbody');
+                        const changes = document.getElementById('changes-tbody');
                         changes.innerHTML = '';
                         snapshot.docs.forEach(doc => {
-                              let data = doc.data();
+                              const data = doc.data();
                               changes.innerHTML += `<tr>
                                     <td>${data.name}</td>
                                     <td>${data.type} ${data.typeUnit}</td>
@@ -221,7 +242,7 @@
                               Database.unsubscribeGetChanges !== undefined ? Database.unsubscribeGetChanges() : null;
                               Auth.uid = '';
                               UI.hideElements('', 'none', 'none', 'none', 'edit');
-                              document.getElementById('item-list').innerHTML = '';
+                              UI.clearItemList();
                               document.getElementById('changes-tbody').innerHTML = '';
                         }
                   });
@@ -283,34 +304,47 @@
       });
 
       document.addEventListener('click', (e) => {
-            if(e.target.classList.contains('delete') && confirm(`Biztos törlöd ${e.target.parentElement.parentElement.children[0].innerHTML}-t?`)){
+            const classList = e.target.classList;
+            const id = e.target.id;
+
+            if(classList.contains('delete') && confirm(`Biztos törlöd ${e.target.parentElement.parentElement.children[0].innerHTML}-t?`)){
                   Database.deleteItem(e.target.parentElement.id);
             }
 
-            if(e.target.classList.contains('edit')){
+            if(classList.contains('edit')){
                   amountForm.dataset.id = e.target.parentElement.id;
                   amountForm['edit-amount-input'].value = e.target.innerHTML.split(' ')[0];
                   amountForm['edit-amount-input'].focus();
             }
 
-            if(e.target.classList.contains('collapsible-header')){
+            if(classList.contains('collapsible-header')){
                   Array.from(e.target.parentElement.parentElement.children).forEach((item, key) => item.className === 'active' ? UI.activeItem = key : null);
                   itemForm['item-group-input'].value = e.target.innerHTML.split('<')[0];
             }
 
-            if(e.target.classList.contains('changes-length')){
+            if(classList.contains('changes-length')){
                   Auth.uid !== '' ? Database.getChanges(parseInt(e.target.innerHTML.split('<')[0])) : null;
             }
 
-            if(e.target.id === 'sign-out-trigger') Auth.signOut();
+            if(id === 'sign-out-trigger') Auth.signOut();
 
-            if(e.target.classList.contains('print')) UI.print(e.target.previousSibling.data);
+            if(classList.contains('print')) UI.print(e.target.previousSibling.data);
 
-            if(e.target.classList.contains('image-trigger')) Storage.getImage(e.target.innerHTML);
+            if(classList.contains('image-trigger')) Storage.getImage(e.target.innerHTML);
 
-            if(e.target.id === 'item-form-trigger') document.getElementById('item-group-input').focus();
+            if(id === 'item-form-trigger') document.getElementById('item-group-input').focus();
 
-            if(e.target.id === 'sign-in-trigger') document.getElementById('email').focus();
+            if(id === 'sign-in-trigger') document.getElementById('email').focus();
+
+            if(id === 'btn-under-limit') {
+                  if(e.target.innerHTML === 'Limit alattiak'){
+                        Database.getItemsUnderLimit();
+                        e.target.innerHTML = 'Vissza';
+                  } else {
+                        Database.getItems();
+                        e.target.innerHTML = 'Limit alattiak';
+                  }
+            };
       });
 
       const amountForm = document.querySelector('.edit-amount-form');
