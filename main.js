@@ -65,16 +65,21 @@
                   wrapper.appendChild(select);
                   M.FormSelect.init(select);
                   select.addEventListener('change', (e) => {
-                        Database.getItemsWhere(e.target.value);
+                        Database.getItemsWhere("manufacturer", "==", e.target.value);
                   });
             }
 
-            static hideElements(signInTrigger, signOutTrigger, deleteTrigger, itemFormTrigger, amountTrigger){
+            static hideElements(signInTrigger, signOutTrigger, deleteTrigger, itemFormTrigger, amountTrigger, underLimitTrigger, changesTrigger, searchTrigger, refreshTrigger, manufacturerSelectTrigger){
                   document.getElementById('sign-in-trigger').style.display = signInTrigger;
                   document.getElementById('sign-out-trigger').style.display = signOutTrigger;
                   Array.from(document.getElementsByClassName('delete')).forEach(element => element.style.display = deleteTrigger);
                   document.getElementById('item-form-trigger').style.display = itemFormTrigger;
                   Array.from(document.getElementsByClassName('edit')).forEach(element => element.className = amountTrigger);
+                  document.getElementById('btn-under-limit').style.display = underLimitTrigger;
+                  document.getElementById('changes-trigger').style.display = changesTrigger;
+                  document.getElementById('search-trigger').style.display = searchTrigger;
+                  document.getElementById('refresh-trigger').style.display = refreshTrigger;
+                  document.getElementById('manufacturer-select-wrapper').style.display = manufacturerSelectTrigger;
             }
 
             static print(group){
@@ -97,23 +102,24 @@
             static getItems() {
                   Database.unsubscribeGetItemsWhere !== undefined ? Database.unsubscribeGetItemsWhere() : null;
                   firebase.firestore().settings({ timestampsInSnapshots: true });
-                  Database.unsubscribeGetItems = firebase.firestore().collection('items').onSnapshot(snapshot => {
+                  Database.unsubscribeGetItems = firebase.firestore().collection('items').orderBy('group', 'asc').onSnapshot(snapshot => {
                         Database.loopAndDisplay(snapshot);
                         Database.getManufacturers(snapshot);
                   });
             }
 
-            static getItemsWhere(manufacturer){
+            static getItemsWhere(searchCategory, searchParameter, searchTerm){
                   Database.unsubscribeGetItems();
-                  if(manufacturer !== "Összes"){
-                        Database.unsubscribeGetItemsWhere = firebase.firestore().collection('items').where("manufacturer", "==", manufacturer).onSnapshot(snapshot => {
+                  Database.unsubscribeGetItemsWhere !== undefined ? Database.unsubscribeGetItemsWhere() : null;
+                  if(searchTerm !== "Összes"){
+                        Database.unsubscribeGetItemsWhere = firebase.firestore().collection('items').where(searchCategory, searchParameter, searchTerm).onSnapshot(snapshot => {
                               Database.loopAndDisplay(snapshot);
                         });
                   } else Database.getItems();
             }
 
             static getItemsUnderLimit(){
-                  firebase.firestore().collection('items').get().then(snapshot => {
+                  firebase.firestore().collection('items').orderBy('group', 'asc').get().then(snapshot => {
                         UI.clearItemList();
                         let hasItems = false;
 
@@ -236,12 +242,12 @@
                               Database.getItems();
                               Database.getChanges(5);
                               Auth.uid = user.uid;
-                              UI.hideElements('none', '', '', '', 'modal-trigger edit');
+                              UI.hideElements('none', '', '', '', 'modal-trigger edit', '', '', '', '', '');
                         } else {
                               Database.unsubscribeGetItems !== undefined ? Database.unsubscribeGetItems() : null;
                               Database.unsubscribeGetChanges !== undefined ? Database.unsubscribeGetChanges() : null;
                               Auth.uid = '';
-                              UI.hideElements('', 'none', 'none', 'none', 'edit');
+                              UI.hideElements('', 'none', 'none', 'none', 'edit', 'none', 'none', 'none', 'none', 'none');
                               UI.clearItemList();
                               document.getElementById('changes-tbody').innerHTML = '';
                         }
@@ -336,15 +342,9 @@
 
             if(id === 'sign-in-trigger') document.getElementById('email').focus();
 
-            if(id === 'btn-under-limit') {
-                  if(e.target.innerHTML === 'Limit alattiak'){
-                        Database.getItemsUnderLimit();
-                        e.target.innerHTML = 'Vissza';
-                  } else {
-                        Database.getItems();
-                        e.target.innerHTML = 'Limit alattiak';
-                  }
-            };
+            if(id === 'btn-under-limit') Database.getItemsUnderLimit();
+
+            if(id === 'refresh-trigger') Database.getItems();
       });
 
       const amountForm = document.querySelector('.edit-amount-form');
@@ -362,4 +362,14 @@
             Auth.signIn(signInForm['email'].value, signInForm['password'].value);
             signInForm.reset();
       });
+
+      const searchForm = document.getElementById('search-form');
+      searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const searchCategory = document.getElementById('search-category').value;
+            const searchTerm = document.getElementById('search-term').value;
+
+            Database.getItemsWhere(searchCategory, "==", searchTerm);
+            searchForm.reset();
+      })
 })();

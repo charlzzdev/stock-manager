@@ -105,6 +105,29 @@
             </div>
       </div>
 
+      <div class="modal modal-fixed-footer" id="search">
+            <div class="modal-content">
+                  <h4>Keresés</h4>
+                  <form id="search-form">
+                        <div class="input-field">
+                              <select id="search-category">
+                                    <option value="group">Csoport</option>
+                                    <option value="name">Megnevezés</option>
+                                    <option value="type">Típus</option>
+                                    <option value="id">Cikkszám</option>
+                                    <option value="amountUnit">Mennyiség mértékegység</option>
+                                    <option value="typeUnit">Típus mértékegység</option>
+                              </select>
+                        </div>
+                        <div class="input-field">
+                              <input type="text" id="search-term">
+                              <label for="search-term">Keresett szó</label>
+                        </div>
+                        <button class="btn blue modal-close">Keresés</button>
+                  </form>
+            </div>
+      </div>
+
       <img class="modal modal-close" id="image" style="max-height: 80%; bottom: 10%; width: initial;">
 
       
@@ -120,8 +143,10 @@
                   <a class="modal-trigger btn blue" id="sign-in-trigger" href="#sign-in">Bejelentkezés</a>
                   <button class="btn blue" id="sign-out-trigger" style="display: none;">Kijelentkezés</button>
                   <a class="modal-trigger btn blue" id="item-form-trigger" style="display: none;" href="#item-form">Hozzáad</a>
-                  <a class="btn blue" id="btn-under-limit">Limit alattiak</a>
-                  <a href="#changes" class="modal-trigger" id="changes-trigger">Legutóbbi változtatások</a>
+                  <a class="btn blue" id="btn-under-limit" style="display: none;">Limit alattiak</a>
+                  <a href="#changes" class="modal-trigger" id="changes-trigger" style="display: none;">Legutóbbi változtatások</a>
+                  <a href="#search" id="search-trigger" class="modal-trigger btn-floating btn-flat white" style="width: 40px; display: none;"><i class="material-icons blue-text">search</i></a>
+                  <i id="refresh-trigger" class="material-icons blue-text" style="cursor: pointer; width: 24px; display: none;">refresh</i>
                   <div id="manufacturer-select-wrapper"></div>
             </div>
             <ul class="collapsible" id="item-list"></ul>
@@ -140,7 +165,7 @@
                   position: absolute;
                   right: 0;
             }
-            @media (max-width: 700px){
+            @media (max-width: 1200px){
                   .flexed{
                         flex-direction: column;
                   }
