@@ -37,9 +37,11 @@
                         </div>
                         <div class="input-field col">
                               <select id="type-unit">
+                                    <option></option>
                                     <option>mm²</option>
                                     <option>kg</option>
                                     <option>liter</option>
+                                    <option>cm</option>
                               </select>
                         </div>
                   </div>
@@ -130,7 +132,7 @@
 
       <img class="modal modal-close" id="image" style="max-height: 80%; bottom: 10%; width: initial;">
 
-      
+
 
       <nav>
             <div class="nav-wrapper blue">
@@ -164,6 +166,14 @@
             #manufacturer-select-wrapper{
                   position: absolute;
                   right: 0;
+            }
+            .toast{
+                  display: flex;
+                  flex-direction: column;
+            }
+            #image{
+                  box-shadow: none;
+                  background: transparent;
             }
             @media (max-width: 1200px){
                   .flexed{

@@ -17,9 +17,11 @@
             static listItem(item, itemId){
                   M.Collapsible.getInstance(document.querySelector('.collapsible')).open(UI.activeItem);
                   const tr = document.createElement('tr');
-                  tr.innerHTML = `<td title=${item.manufacturer}>${item.name}</td>
-                        <td>${item.type} ${item.typeUnit}</td>
-                        <td><a class="modal-trigger image-trigger" href="#image">${item.id}</a></td>
+                  tr.innerHTML = `
+                        <td class="editable" data-id=${itemId} data-field="manufacturer" contenteditable>${item.manufacturer}</td>
+                        <td title="${item.manufacturer}" class="editable" data-id=${itemId} data-field="name" contenteditable>${item.name}</td>
+                        <td><span class="editable" data-id=${itemId} data-field="type" contenteditable>${item.type}</span> ${item.typeUnit}</td>
+                        <td><a class="modal-trigger image-trigger editable" data-id=${itemId} data-field="id" contenteditable href="#image">${item.id}</a></td>
                         <td id="${itemId}">
                               <a href="#amount" class="
                                     ${Auth.uid === 'vw2XmPhi0SY4EAowNUAimyFznDk2' ? 'modal-trigger' : ''}
@@ -36,7 +38,7 @@
                               <div class="collapsible-body">
                                     <table class="striped responsive-table">
                                           <thead>
-                                                <tr><th>Megnevezés</th><th>Típus</th><th>Cikkszám</th><th>Raktár</th></tr>
+                                                <tr><th>Gyártó</th><th>Megnevezés</th><th>Típus</th><th>Cikkszám</th><th>Raktár</th></tr>
                                           </thead>
                                           <tbody id="${item.group}-tbody">
                                                 <tr>${tr.innerHTML}</tr>
@@ -141,6 +143,29 @@
                   snapshot.docs.forEach(doc => {
                         UI.listItem(doc.data(), doc.id);
                   });
+
+                  document.querySelectorAll('.editable').forEach(field => {
+                        const update = (e) => Database.updateField(e.target.dataset.id, e.target.dataset.field, e.target.innerHTML);
+
+                        let edited = false;
+                        field.addEventListener('blur', e => edited && update(e));
+                        field.addEventListener('keydown', e => {
+                              if(edited && e.key === 'Enter'){
+                                    e.preventDefault();
+                                    field.blur();
+                              } else edited = true;
+                        });
+                  });
+            }
+
+            static updateField(id, field, newValue){
+                  firebase.firestore().collection('items').doc(id).update({
+                        [field]: newValue
+                  }).then(() => {
+                        M.toast({html: 'Sikeresen szerkesztve', classes: 'green'});
+                  }).catch(() => {
+                        M.toast({html: 'Sikertelen szerkesztés', classes: 'red'});
+                  });
             }
 
             static getManufacturers(snapshot){
@@ -212,11 +237,11 @@
                               amount: `<span class="green-text">Hozzáadva (${item.amount} ${item.amountUnit})</span>`,
                               date
                         } : {
-                              name: item[0].innerHTML,
-                              type: item[1].innerHTML.split(' ')[0],
-                              typeUnit: item[1].innerHTML.split(' ')[1],
-                              id: item[2].children[0].innerHTML,
-                              amount: action === 'update' ? `<span class="red-text">${item[3].children[0].innerHTML}</span> → <span class="green-text">${amount} ${item[3].children[0].innerHTML.split(' ')[1]}</span>` : '<span class="red-text">Törölve</span>',
+                              name: item[1].innerHTML,
+                              type: item[2].innerHTML.split(' ')[0],
+                              typeUnit: item[2].innerHTML.split(' ')[1],
+                              id: item[3].children[0].innerHTML,
+                              amount: action === 'update' ? `<span class="red-text">${item[4].children[0].innerHTML}</span> → <span class="green-text">${amount} ${item[4].children[0].innerHTML.split(' ')[1]}</span>` : '<span class="red-text">Törölve</span>',
                               date
                         }
                   );
@@ -265,9 +290,15 @@
             }
 
             static getImage(name){
+                  document.getElementById('image').src = '';
                   firebase.storage().ref('/idImages/').child(name).getDownloadURL()
                         .then(url => document.getElementById('image').src = url)
-                        .catch(() => M.toast({html: `${name} képe nem lett megtalálva`, classes: 'red'}));
+                        .catch(() => {
+                              M.toast({html: `<p style="display: block;">${name} képe nem lett megtalálva</p> <input type="file" id="upload-image-after-error">`, classes: 'red'});
+                              document.getElementById('upload-image-after-error').addEventListener('change', e => {
+                                    Storage.uploadImage(e.target.files[0], name);
+                              });
+                        });
             }
 
             static deleteImage(name){
